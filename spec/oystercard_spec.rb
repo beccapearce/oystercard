@@ -29,9 +29,12 @@ describe OysterCard do
   end
 
   describe '#journey' do
+
+
     before do
       card.top_up(50)
     end
+
 
     it 'is initially not in a journey' do
       allow(card).to receive(:in_journey?).and_return(false)
@@ -41,12 +44,6 @@ describe OysterCard do
     it 'can touch in' do
       card.touch_in(station)
       expect(card).to be_in_journey
-    end
-
-    it 'error if card has insufficient balance' do
-      50.times {card.touch_in(station)}
-      50.times {card.touch_out(station)}
-      expect{card.touch_in(station)}.to raise_error "Card has insufficient balance"
     end
 
     it 'can touch out' do
@@ -67,6 +64,16 @@ describe OysterCard do
       expect(card.journeys).to be_empty
     end
 
+    it 'charges penalty fare if only touched in' do
+      subject.touch_in(station)
+      expect{ subject.touch_in(station) }.to change{card.balance}.by (-6)
+    end
+
+    it 'charges penalty fare if only touched out' do
+      expect{ subject.touch_out(station) }.to change{card.balance}.by (-6)
+    end
+
+
     let(:journey){ {begining_station: station, final_station: station} }
 
     it 'stores a journey' do
@@ -76,5 +83,12 @@ describe OysterCard do
       expect(card.journeys.size).to eq(1)
     end
   end
-
+  describe '#touch_in' do
+  it 'error if card has insufficient balance' do
+    card.top_up(1)
+    card.touch_in(station)
+    card.touch_out(station)
+    expect{card.touch_in(station)}.to raise_error "Card has insufficient balance"
+  end
+  end
 end
